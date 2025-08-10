@@ -24,13 +24,13 @@ class Consultation(models.Model):
         verbose_name=_('Статус')
     )
     doctor = models.ForeignKey(
-        'accounts.User',
+        'accounts.Doctor',
         on_delete=models.PROTECT,
         related_name='doctor_consultations',
         verbose_name=_('Врач')
     )
     patient = models.ForeignKey(
-        'accounts.User',
+        'accounts.Patient',
         on_delete=models.PROTECT,
         related_name='patient_consultations',
         verbose_name=_('Пациент')
