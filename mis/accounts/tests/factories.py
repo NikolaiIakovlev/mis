@@ -2,7 +2,10 @@ import factory
 from django.contrib.auth.hashers import make_password
 from accounts.models import User, Doctor, Patient
 
+
 class UserFactory(factory.django.DjangoModelFactory):
+    """Factory для модели User"""
+
     class Meta:
         model = User
 
@@ -11,12 +14,15 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = factory.Sequence(lambda n: f'user{n}@example.com')
     role = 'patient'
 
+
     @factory.post_generation
     def set_role(self, create, extracted, **kwargs):
+        """Устанавливает роль пользователя."""
         if extracted:
             self.role = extracted
 
 class DoctorFactory(factory.django.DjangoModelFactory):
+    """Factory для модели Doctor"""
     class Meta:
         model = Doctor
 
@@ -26,6 +32,7 @@ class DoctorFactory(factory.django.DjangoModelFactory):
     specialization = 'General Practitioner'
 
 class PatientFactory(factory.django.DjangoModelFactory):
+    """Factory для модели Patient"""
     class Meta:
         model = Patient
 

@@ -1,47 +1,78 @@
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Consultation, User, Doctor, Patient, Clinic
+from .models import Consultation
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        token['role'] = user.role
-        return token
-
-class ClinicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Clinic
-        fields = ['id', 'name', 'address']
-
-class DoctorSerializer(serializers.ModelSerializer):
-    clinics = ClinicSerializer(many=True, read_only=True)
-    
-    class Meta:
-        model = Doctor
-        fields = ['id', 'user', 'specialization', 'clinics']
-
-class PatientSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Patient
-        fields = ['id', 'user', 'phone']
 
 class ConsultationSerializer(serializers.ModelSerializer):
-    doctor = DoctorSerializer(read_only=True)
-    patient = PatientSerializer(read_only=True)
-    clinic = ClinicSerializer(read_only=True)
-    
+    doctor_name = serializers.CharField(source='doctor.get_full_name', read_only=True)
+    patient_name = serializers.CharField(source='patient.get_full_name', read_only=True)
+    clinic_name = serializers.CharField(source='clinic.name', read_only=True)
+
     class Meta:
         model = Consultation
-        fields = '__all__'
+        fields = [
+            'id',
+            'start_time',
+            'end_time',
+            'status',
+            'doctor',
+            'doctor_name',
+            'patient',
+            'patient_name',
+            'clinic',
+            'clinic_name',
+            'created_at',
+            'updated_at'
+        ]
         read_only_fields = ['created_at', 'updated_at']
 
-class ConsultationCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Consultation
-        fields = ['doctor', 'clinic', 'date_time', 'notes']
+# from rest_framework import serializers
+# from .models import Consultation
+# from accounts.models import Doctor, Patient  # Импортируем модели
+# from clinics.models import Clinic
+# from accounts.serializers import DoctorProfileSerializer, PatientProfileSerializer
+# from clinics.serializers import ClinicSerializer
 
-class ConsultationStatusSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Consultation
-        fields = ['status']
+# class ConsultationSerializer(serializers.ModelSerializer):
+#     doctor = DoctorProfileSerializer(read_only=True)
+#     patient = PatientProfileSerializer(read_only=True)
+#     clinic = ClinicSerializer(read_only=True)
+    
+#     # Используем PrimaryKeyRelatedField с явным указанием queryset
+#     doctor_id = serializers.PrimaryKeyRelatedField(
+#         queryset=Doctor.objects.all(), 
+#         source='doctor',
+#         write_only=True
+#     )
+#     patient_id = serializers.PrimaryKeyRelatedField(
+#         queryset=Patient.objects.all(),
+#         source='patient',
+#         write_only=True
+#     )
+#     clinic_id = serializers.PrimaryKeyRelatedField(
+#         queryset=Clinic.objects.all(),
+#         source='clinic',
+#         write_only=True
+#     )
+
+#     class Meta:
+#         model = Consultation
+#         fields = [
+#             'id',
+#             'start_time',
+#             'end_time',
+#             'status',
+#             'doctor',
+#             'patient',
+#             'clinic',
+#             'doctor_id',
+#             'patient_id',
+#             'clinic_id',
+#             'created_at',
+#             'updated_at'
+#         ]
+#         read_only_fields = ['status', 'created_at', 'updated_at']
+
+# class ConsultationStatusSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Consultation
+#         fields = ['status']

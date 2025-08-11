@@ -21,7 +21,7 @@ class TestAuthIntegration:
         }
 
         response = client.post(f'{BASE_URL}login/', data=data)
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert 'access' in response.data
         assert 'refresh' in response.data
@@ -41,7 +41,7 @@ class TestAuthIntegration:
         }
 
         response = client.post(f'{BASE_URL}login/', data=data)
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'Неверные учетные данные.' in str(response.data)
 
@@ -56,7 +56,7 @@ class TestAuthIntegration:
         }
 
         response = client.post(f'{BASE_URL}token/refresh/', data=data)
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert 'access' in response.data
 

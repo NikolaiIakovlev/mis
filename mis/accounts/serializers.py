@@ -63,17 +63,3 @@ class UserWithProfileSerializer(UserSerializer):
         elif obj.is_patient() and hasattr(obj, 'patient'):
             return PatientProfileSerializer(obj.patient).data
         return None
-
-# class UserWithProfileSerializer(UserSerializer):
-#     """Сериализатор для пользователя с профилем."""
-#     profile = serializers.SerializerMethodField()
-
-#     class Meta(UserSerializer.Meta):
-#         fields = UserSerializer.Meta.fields + ['profile']
-
-#     def get_profile(self, obj):
-#         if obj.is_doctor() and hasattr(obj, 'doctor'):
-#             return DoctorProfileSerializer(obj.doctor).data
-#         elif obj.is_patient() and hasattr(obj, 'patient'):
-#             return PatientProfileSerializer(obj.patient).data
-#         return None

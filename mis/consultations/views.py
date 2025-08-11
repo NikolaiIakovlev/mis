@@ -1,71 +1,93 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import Consultation
-from .serializers import (
-    ConsultationSerializer,
-    ConsultationCreateSerializer,
-    ConsultationStatusSerializer
-)
-from .permissions import (
-    IsAdmin,
-    IsDoctor,
-    IsPatient,
-    IsDoctorOrAdmin,
-    IsPatientOrAdmin
-)
+from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
+from .models import Consultation
+from .serializers import ConsultationSerializer
+
 
 class ConsultationViewSet(viewsets.ModelViewSet):
-    queryset = Consultation.objects.all()
+    queryset = Consultation.objects.all().select_related('doctor', 'patient', 'clinic')
+    serializer_class = ConsultationSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'clinic']
-    search_fields = [
-        'doctor__user__last_name', 'doctor__user__first_name',
-        'patient__user__last_name', 'patient__user__first_name'
-    ]
-    ordering_fields = ['date_time', 'created_at']
-    ordering = ['-date_time']
+    filterset_fields = ['status']
+    search_fields = ['doctor__user__first_name', 'doctor__user__last_name',
+                     'patient__user__first_name', 'patient__user__last_name']
+    ordering_fields = ['created_at', 'start_time']
+    ordering = ['-created_at']
 
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return ConsultationCreateSerializer
-        elif self.action == 'change_status':
-            return ConsultationStatusSerializer
-        return ConsultationSerializer
-
-    def get_permissions(self):
-        if self.action == 'create':
-            permission_classes = [IsPatient]
-        elif self.action in ['update', 'partial_update', 'destroy']:
-            permission_classes = [IsAdmin]
-        elif self.action == 'change_status':
-            permission_classes = [IsDoctorOrAdmin]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-
-    def perform_create(self, serializer):
-        patient = self.request.user.patient_profile
-        serializer.save(patient=patient, status='created')
-
-    @action(detail=True, methods=['patch'])
+    @action(detail=True, methods=['patch'], url_path='change-status')
     def change_status(self, request, pk=None):
         consultation = self.get_object()
-        serializer = self.get_serializer(consultation, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        new_status = request.data.get('status')
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user = self.request.user
+        if new_status not in dict(Consultation.Status.choices).keys():
+            return Response(
+                {'error': 'Недопустимый статус.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        consultation.status = new_status
+        consultation.save()
+        return Response(self.get_serializer(consultation).data)
+
+
+# from rest_framework import viewsets, filters, status
+# from rest_framework.decorators import action
+# from rest_framework.response import Response
+# from rest_framework.permissions import IsAuthenticated
+# from django_filters.rest_framework import DjangoFilterBackend
+# from .models import Consultation
+# from .serializers import ConsultationSerializer, ConsultationStatusSerializer
+# from accounts.permissions import IsDoctorUser, IsPatientUser, IsAdminUser
+
+# class ConsultationViewSet(viewsets.ModelViewSet):
+#     queryset = Consultation.objects.all()
+#     serializer_class = ConsultationSerializer
+#     permission_classes = [IsAuthenticated]
+#     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+#     filterset_fields = ['status', 'doctor', 'patient', 'clinic']
+#     search_fields = [
+#         'doctor__user__first_name',
+#         'doctor__user__last_name',
+#         'patient__user__first_name',
+#         'patient__user__last_name'
+#     ]
+#     ordering_fields = ['created_at', 'start_time', 'end_time']
+#     ordering = ['-created_at']
+
+#     def get_queryset(self):
+#         queryset = super().get_queryset()
         
-        if user.role == 'doctor':
-            return queryset.filter(doctor__user=user)
-        elif user.role == 'patient':
-            return queryset.filter(patient__user=user)
-        return queryset
+#         # Фильтрация для врачей - только их консультации
+#         if self.request.user.is_doctor():
+#             return queryset.filter(doctor=self.request.user.doctor)
+        
+#         # Фильтрация для пациентов - только их консультации
+#         elif self.request.user.is_patient():
+#             return queryset.filter(patient=self.request.user.patient)
+        
+#         # Админ видит все консультации
+#         return queryset
+
+#     def get_permissions(self):
+#         if self.action in ['create']:
+#             return [IsAuthenticated(), IsPatientUser()]
+#         elif self.action in ['update', 'partial_update', 'destroy']:
+#             return [IsAuthenticated(), IsAdminUser()]
+#         return super().get_permissions()
+
+#     @action(detail=True, methods=['patch'])
+#     def change_status(self, request, pk=None):
+#         consultation = self.get_object()
+#         serializer = ConsultationStatusSerializer(
+#             consultation, 
+#             data=request.data, 
+#             partial=True
+#         )
+        
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+        
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

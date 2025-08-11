@@ -6,14 +6,15 @@ from .serializers import UserLoginSerializer, UserWithProfileSerializer
 from accounts.models import User
 from accounts.permissions import IsAdminUser, IsDoctorUser, IsPatientUser
 
+
 class LoginView(APIView):
+    """Представление для аутентификации пользователя."""
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        
         refresh = RefreshToken.for_user(user)
         
         return Response({
@@ -24,6 +25,7 @@ class LoginView(APIView):
 
 
 class UserProfileView(APIView):
+    """Представление для получения данных профиля пользователя."""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -33,6 +35,7 @@ class UserProfileView(APIView):
 
 
 class AdminOnlyView(APIView):
+    """Представление для доступа только для администраторов."""
     permission_classes = [permissions.IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -40,6 +43,7 @@ class AdminOnlyView(APIView):
 
 
 class DoctorOnlyView(APIView):
+    """Представление для доступа только для врачей."""
     permission_classes = [permissions.IsAuthenticated, IsDoctorUser]
 
     def get(self, request):
@@ -47,6 +51,7 @@ class DoctorOnlyView(APIView):
 
 
 class PatientOnlyView(APIView):
+    """Представление для доступа только для пациентов."""
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def get(self, request):
