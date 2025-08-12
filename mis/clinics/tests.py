@@ -16,7 +16,7 @@ class ClinicAPITests(APITestCase):
         url = reverse('clinic-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data), 4)
         
     def test_get_clinic_detail(self):
         url = reverse('clinic-detail', args=[self.clinic.id])
